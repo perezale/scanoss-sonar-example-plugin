@@ -6,12 +6,14 @@ import org.sonar.api.utils.log.Loggers;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ScanOSSScanner {
 
     private static final Logger LOGGER = Loggers.get(ScanOSSScanner.class);
-    public static String runScan(String path, String url, String key){
+
+    public static String runScan(String path, String url, String key) throws RuntimeException {
         LOGGER.info("[SCANOSS] Scanning path " + path + "...");
         ProcessBuilder processBuilder = new ProcessBuilder("scanoss-py", "scan", "--apiurl", url, "--key", key, path);
         processBuilder.redirectErrorStream(true);
@@ -20,7 +22,15 @@ public class ScanOSSScanner {
         try {
             process = processBuilder.start();
             List<String> processOutput = readProcessOutput(process.getInputStream());
-            List<String> results = processOutput.subList(processOutput.indexOf("{"),processOutput.size());
+            LOGGER.debug("[SCANOSS] " + Arrays.toString(processOutput.toArray()));
+            int jsonStartPosition = processOutput.indexOf("{");
+            List<String> results;
+            if(jsonStartPosition < 0) {
+                results = processOutput;
+                LOGGER.error("[SCANOSS] " + String.join("",results));
+                return null;
+            }
+            results = processOutput.subList(jsonStartPosition, processOutput.size());
             int exitCode = process.waitFor();
             output = String.join("", results);
             LOGGER.info("[SCANOSS] Exit code: " + String.valueOf(exitCode));
@@ -29,9 +39,9 @@ public class ScanOSSScanner {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
-        }finally{
-            return output;
         }
+
+        return output;
     }
 
     private static List<String> readProcessOutput(InputStream inputStream) {

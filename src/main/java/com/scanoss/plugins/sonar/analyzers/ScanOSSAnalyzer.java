@@ -38,10 +38,13 @@ public class ScanOSSAnalyzer {
         this.key = key;
     }
 
-    public ScanResult analyze() throws AnalyzerException {
+    public ScanResult analyze()  {
         log.info("[SCANOSS] Starting scan process...");
         ScanResult scanResult = new ScanResult();
         String output = ScanOSSScanner.runScan(rootDir.getPath(), this.url, this.key);
+        if(output == null || output.isEmpty()){
+            return null;
+        }
         Map<String, List<ScanData>> stringListMap = ScanOSSParser.parseScanResult(output);
         scanResult.setFiles(stringListMap);
         return scanResult;
