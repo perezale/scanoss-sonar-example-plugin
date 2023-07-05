@@ -62,6 +62,12 @@ public class ScanOSSSensor implements Sensor {
 
     @Override
     public void execute(SensorContext sensorContext) {
+        Optional<Boolean> enableScan = sensorContext.config().getBoolean(ScanOSSProperties.SCANOSS_ENABLE_SCAN_KEY);
+        if(enableScan.isPresent() && enableScan.get().equals(false)){
+            log.warn("[SCANOSS] Scan disabled");
+            return;
+        }
+
         File rootDir = fileSystem.baseDir();
 
         log.info("[SCANOSS] Analysing project root: " + rootDir.getAbsolutePath());
